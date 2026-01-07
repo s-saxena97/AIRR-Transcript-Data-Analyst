@@ -39,7 +39,14 @@ export const DataVisualizer: React.FC<Props> = ({ visualization }) => {
       return;
     }
 
-    toPng(chartRef.current, { cacheBust: true, backgroundColor: '#09090b' })
+    toPng(chartRef.current, { 
+      cacheBust: true, 
+      backgroundColor: '#09090b',
+      style: {
+        padding: '20px',
+        borderRadius: '8px'
+      }
+    })
       .then((dataUrl) => {
         const link = document.createElement('a');
         link.download = `${title.replace(/\s+/g, '-').toLowerCase()}-chart.png`;
@@ -57,30 +64,32 @@ export const DataVisualizer: React.FC<Props> = ({ visualization }) => {
     borderRadius: '6px',
     color: '#fafafa',
     fontSize: '12px',
-    padding: '8px'
+    padding: '8px',
+    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)'
   };
 
   const axisLabelStyle: React.CSSProperties = {
-    fill: '#a1a1aa',
+    fill: '#71717a', // zinc-400
     fontSize: '10px',
     fontWeight: 'bold',
     textTransform: 'uppercase',
-    letterSpacing: '0.05em'
+    letterSpacing: '0.1em'
   };
 
   const tickStyle = {
     fontSize: 10,
-    fill: '#d4d4d8', // zinc-300 for readability
+    fill: '#d4d4d8', // zinc-300 for crisp reading
     fontWeight: 500
   };
 
-  const chartMargin = { top: 20, right: 30, left: 20, bottom: 40 };
+  // Increased margins and specific heights to prevent label clipping
+  const chartMargin = { top: 30, right: 40, left: 30, bottom: 60 };
 
   return (
     <div className="mt-6 relative group">
       <div 
         ref={chartRef}
-        className="p-6 bg-zinc-900/50 rounded-lg border border-zinc-800 transition-all hover:border-zinc-700 overflow-visible"
+        className="p-6 bg-zinc-900/30 rounded-lg border border-zinc-800 transition-all hover:border-zinc-700 overflow-visible"
       >
         <div className="flex justify-between items-start mb-8">
           <h3 className="text-xs font-black text-zinc-100 uppercase tracking-[0.2em] opacity-90">{title}</h3>
@@ -94,51 +103,53 @@ export const DataVisualizer: React.FC<Props> = ({ visualization }) => {
           </button>
         </div>
         
-        <div className="h-72 w-full overflow-visible">
+        <div className="h-80 w-full overflow-visible">
           <ResponsiveContainer width="100%" height="100%">
             {type === ChartType.BAR ? (
               <BarChart data={data} margin={chartMargin}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#27272a" />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#27272a" strokeOpacity={0.6} />
                 <XAxis 
                   dataKey="label" 
                   tick={tickStyle} 
                   axisLine={{ stroke: '#3f3f46' }} 
                   tickLine={false}
-                  height={50}
+                  height={60}
+                  interval={0}
                 >
-                  <Label value={xAxisLabel} offset={-25} position="insideBottom" style={axisLabelStyle} />
+                  <Label value={xAxisLabel} offset={-40} position="insideBottom" style={axisLabelStyle} />
                 </XAxis>
                 <YAxis 
                   tick={tickStyle} 
                   axisLine={{ stroke: '#3f3f46' }} 
                   tickLine={false}
-                  width={40}
+                  width={50}
                 >
                   <Label value={yAxisLabel} angle={-90} position="insideLeft" style={{ ...axisLabelStyle, textAnchor: 'middle' }} offset={10} />
                 </YAxis>
                 <Tooltip 
                   contentStyle={tooltipStyle} 
-                  cursor={{ fill: '#ffffff10' }}
+                  cursor={{ fill: '#ffffff08' }}
                 />
-                <Bar dataKey="value" fill="#fafafa" radius={[4, 4, 0, 0]} barSize={40} />
+                <Bar dataKey="value" fill="#fafafa" radius={[4, 4, 0, 0]} barSize={32} />
               </BarChart>
             ) : type === ChartType.LINE ? (
               <LineChart data={data} margin={chartMargin}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#27272a" />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#27272a" strokeOpacity={0.6} />
                 <XAxis 
                   dataKey="label" 
                   tick={tickStyle} 
                   axisLine={{ stroke: '#3f3f46' }} 
                   tickLine={false}
-                  height={50}
+                  height={60}
+                  interval={0}
                 >
-                  <Label value={xAxisLabel} offset={-25} position="insideBottom" style={axisLabelStyle} />
+                  <Label value={xAxisLabel} offset={-40} position="insideBottom" style={axisLabelStyle} />
                 </XAxis>
                 <YAxis 
                   tick={tickStyle} 
                   axisLine={{ stroke: '#3f3f46' }} 
                   tickLine={false}
-                  width={40}
+                  width={50}
                 >
                    <Label value={yAxisLabel} angle={-90} position="insideLeft" style={{ ...axisLabelStyle, textAnchor: 'middle' }} offset={10} />
                 </YAxis>
@@ -153,14 +164,13 @@ export const DataVisualizer: React.FC<Props> = ({ visualization }) => {
                 />
               </LineChart>
             ) : type === ChartType.PIE ? (
-              <PieChart margin={{ bottom: 20 }}>
+              <PieChart margin={{ bottom: 30, top: 10 }}>
                 <Pie
                   data={data}
                   cx="50%"
                   cy="50%"
                   labelLine={true}
-                  outerRadius={80}
-                  fill="#8884d8"
+                  outerRadius={90}
                   dataKey="value"
                   nameKey="label"
                   stroke="#09090b"
@@ -174,21 +184,21 @@ export const DataVisualizer: React.FC<Props> = ({ visualization }) => {
                 <Tooltip contentStyle={tooltipStyle} />
                 <Legend 
                   iconType="circle" 
-                  wrapperStyle={{ fontSize: '10px', paddingTop: '20px', color: '#d4d4d8', fontWeight: 'bold', textTransform: 'uppercase' }} 
+                  wrapperStyle={{ fontSize: '10px', paddingTop: '30px', color: '#d4d4d8', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em' }} 
                 />
               </PieChart>
             ) : type === ChartType.SCATTER ? (
               <ScatterChart margin={chartMargin}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" strokeOpacity={0.5} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" strokeOpacity={0.4} />
                 <XAxis 
                   type="number" 
                   dataKey="label" 
                   name={xAxisLabel} 
                   tick={tickStyle}
                   axisLine={{ stroke: '#3f3f46' }}
-                  height={50}
+                  height={60}
                 >
-                  <Label value={xAxisLabel} offset={-25} position="insideBottom" style={axisLabelStyle} />
+                  <Label value={xAxisLabel} offset={-40} position="insideBottom" style={axisLabelStyle} />
                 </XAxis>
                 <YAxis 
                   type="number" 
@@ -196,7 +206,7 @@ export const DataVisualizer: React.FC<Props> = ({ visualization }) => {
                   name={yAxisLabel} 
                   tick={tickStyle}
                   axisLine={{ stroke: '#3f3f46' }}
-                  width={40}
+                  width={50}
                 >
                   <Label value={yAxisLabel} angle={-90} position="insideLeft" style={{ ...axisLabelStyle, textAnchor: 'middle' }} offset={10} />
                 </YAxis>

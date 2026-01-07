@@ -1,19 +1,17 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { StudentRecord, ChatMessage, AnalysisResponse } from './types';
-import { SAMPLE_DATA } from './constants';
+import { SAMPLE_DATA, DEMO_CSV_DATA } from './constants';
 import { analyzeData } from './geminiService';
 import { DataVisualizer } from './components/DataVisualizer';
 import { MongoConnector } from './components/MongoConnector';
 import { DataPreview } from './components/DataPreview';
 
 const App: React.FC = () => {
-  // Separate data buffers
   const [csvData, setCsvData] = useState<StudentRecord[] | null>(null);
   const [mongoData, setMongoData] = useState<StudentRecord[] | null>(null);
   const [sourceType, setSourceType] = useState<'sample' | 'csv' | 'mongo'>('sample');
   
-  // Derived active data
   const data = sourceType === 'mongo' ? (mongoData || []) : sourceType === 'csv' ? (csvData || []) : SAMPLE_DATA;
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -29,7 +27,7 @@ const App: React.FC = () => {
     const welcome: ChatMessage = {
       id: 'welcome',
       role: 'assistant',
-      content: "Welcome to AIRR Intelligence. Batch analytical engine is ready. You can query the local sample set, upload transcript CSVs, or connect to the demo MongoDB API via the integration menu.",
+      content: "Welcome to AIRR Intelligence. Three distinct data sources are now available: the local Sample set, a CSV import channel, and the MongoDB API bridge.",
       timestamp: new Date(),
     };
     setMessages([welcome]);
@@ -78,6 +76,17 @@ const App: React.FC = () => {
     }
   };
 
+  const handleLoadDemoCsv = () => {
+    setCsvData(DEMO_CSV_DATA);
+    setSourceType('csv');
+    setMessages(prev => [...prev, {
+      id: Date.now().toString(),
+      role: 'assistant',
+      content: "CSV Channel: Pre-loaded with demo student records (Tech Pioneers).",
+      timestamp: new Date(),
+    }]);
+  };
+
   const handleConnectMongo = async (config: { url: string; method: 'GET' | 'POST'; headers: string; body: string }, bypassData?: any) => {
     if (bypassData) {
       setMongoData(bypassData);
@@ -87,7 +96,7 @@ const App: React.FC = () => {
       setMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
-        content: "Demo API Mode active. Simulated MongoDB connection established successfully.",
+        content: "API Channel: Connected to simulated MongoDB source (Science Leaders).",
         timestamp: new Date(),
       }]);
       return;
@@ -109,16 +118,13 @@ const App: React.FC = () => {
 
       const response = await fetch(config.url, options);
       if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error("API responded with 404. The mock endpoint might have expired. Try using the 'Demo Data' button in the connector.");
-        }
-        throw new Error(`API responded with ${response.status}`);
+        throw new Error(response.status === 404 ? "Endpoint not found. Use 'Demo Data' in the connector." : `API responded with ${response.status}`);
       }
       
       const result = await response.json();
       const records = Array.isArray(result) ? result : (result.documents || result.records || []);
       
-      if (!Array.isArray(records) || records.length === 0) throw new Error("No student records found in payload.");
+      if (!Array.isArray(records) || records.length === 0) throw new Error("No student records found.");
 
       setMongoData(records as StudentRecord[]);
       setSourceType('mongo');
@@ -128,7 +134,7 @@ const App: React.FC = () => {
       setMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
-        content: `Source synchronized: API active. Synced ${records.length} records.`,
+        content: `API synchronized: Active connection to ${config.url}. ${records.length} records retrieved.`,
         timestamp: new Date(),
       }]);
     } catch (err: any) {
@@ -149,7 +155,7 @@ const App: React.FC = () => {
       const parsedData: StudentRecord[] = lines.slice(1).filter(line => line.trim()).map((line, idx) => {
         const values = line.split(',');
         return {
-          id: (idx + 1).toString(),
+          id: `csv-${idx + 1}`,
           name: (values[0] || 'Unknown').replace(/"/g, ''),
           age: parseInt(values[1]) || 0,
           city: (values[2] || '').replace(/"/g, ''),
@@ -173,7 +179,7 @@ const App: React.FC = () => {
         setMessages(prev => [...prev, {
           id: Date.now().toString(),
           role: 'assistant',
-          content: `Data imported: ${parsedData.length} CSV records. Switched to CSV source.`,
+          content: `CSV Imported: ${parsedData.length} records processed from ${file.name}.`,
           timestamp: new Date(),
         }]);
       }
@@ -198,7 +204,6 @@ const App: React.FC = () => {
         onClose={() => setIsPreviewOpen(false)}
       />
 
-      {/* Modern Slim Header */}
       <header className="h-14 border-b border-zinc-900 px-6 flex items-center justify-between bg-zinc-950/80 backdrop-blur-md sticky top-0 z-40">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
@@ -210,7 +215,6 @@ const App: React.FC = () => {
           
           <div className="h-4 w-px bg-zinc-800" />
           
-          {/* Source Switcher Component */}
           <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-md p-0.5">
              <button 
                onClick={() => setSourceType('sample')}
@@ -243,20 +247,29 @@ const App: React.FC = () => {
             className="h-8 px-3 text-[10px] font-bold uppercase tracking-wider text-zinc-100 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 rounded transition-all flex items-center gap-2"
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-            View Batch
+            Batch Preview
           </button>
 
           <button 
             onClick={() => setIsMongoModalOpen(true)}
             className="h-8 px-3 text-[10px] font-bold uppercase tracking-wider text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 rounded border border-zinc-800 transition-all flex items-center gap-2"
           >
-            {mongoData ? 'Manage API' : 'Connect API'}
+            {mongoData ? 'API Config' : 'Link API'}
           </button>
 
-          <label className="h-8 px-3 text-[10px] font-bold uppercase tracking-wider text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 rounded border border-zinc-800 transition-all flex items-center gap-2 cursor-pointer">
-            {csvData ? 'Replace CSV' : 'Import CSV'}
-            <input type="file" accept=".csv" className="hidden" onChange={handleFileUpload} />
-          </label>
+          <div className="flex gap-1">
+            <button 
+              onClick={handleLoadDemoCsv}
+              className="h-8 px-2 text-[10px] font-bold uppercase tracking-wider text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 rounded border border-zinc-800 transition-all"
+              title="Load Demo CSV Set"
+            >
+              Demo CSV
+            </button>
+            <label className="h-8 px-3 text-[10px] font-bold uppercase tracking-wider text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 rounded border border-zinc-800 transition-all flex items-center gap-2 cursor-pointer">
+              {csvData ? 'Replace CSV' : 'Import CSV'}
+              <input type="file" accept=".csv" className="hidden" onChange={handleFileUpload} />
+            </label>
+          </div>
           
           <div className="h-8 w-px bg-zinc-900 mx-2" />
           
@@ -268,7 +281,6 @@ const App: React.FC = () => {
       </header>
 
       <main className="flex-1 flex overflow-hidden">
-        {/* Sidebar */}
         <aside className="w-64 border-r border-zinc-900 bg-zinc-950 hidden lg:flex flex-col">
           <div className="p-6 space-y-8">
             <section className="space-y-4">
@@ -308,12 +320,12 @@ const App: React.FC = () => {
             </section>
 
             <section className="pt-4 border-t border-zinc-900">
-              <label className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.2em] block mb-3">Prompts</label>
+              <label className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.2em] block mb-3">Quick Queries</label>
               <div className="space-y-2">
                 {[
                   'Show GPA distribution',
                   'Compare HS vs College',
-                  'Top 10 by Weighted GPA'
+                  'Top 5 by Credits'
                 ].map(tag => (
                   <button 
                     key={tag}
@@ -328,7 +340,6 @@ const App: React.FC = () => {
           </div>
         </aside>
 
-        {/* Chat Feed */}
         <div className="flex-1 flex flex-col bg-zinc-950 relative">
           <div className="flex-1 overflow-y-auto custom-scrollbar px-6 lg:px-20 py-10 space-y-10">
             {messages.map((msg) => (
@@ -340,7 +351,7 @@ const App: React.FC = () => {
                         <div className="w-1.5 h-1.5 bg-zinc-100 rounded-full" />
                         <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">AIRR Engine Output</span>
                       </div>
-                      <div className="bg-zinc-900/20 border border-zinc-800/60 rounded-lg p-5">
+                      <div className="bg-zinc-900/20 border border-zinc-800/60 rounded-lg p-5 shadow-sm">
                         <div className="text-sm text-zinc-300 leading-relaxed font-light">
                           {msg.content}
                         </div>
@@ -372,14 +383,13 @@ const App: React.FC = () => {
                     <div className="w-1 h-1 bg-zinc-600 rounded-full animate-bounce" style={{ animationDelay: '200ms' }} />
                     <div className="w-1 h-1 bg-zinc-600 rounded-full animate-bounce" style={{ animationDelay: '400ms' }} />
                   </div>
-                  <span className="text-[10px] text-zinc-600 font-bold uppercase tracking-[0.2em]">Processing...</span>
+                  <span className="text-[10px] text-zinc-600 font-bold uppercase tracking-[0.2em]">Analyzing {sourceType.toUpperCase()} source...</span>
                 </div>
               </div>
             )}
             <div ref={chatEndRef} className="h-20" />
           </div>
 
-          {/* Minimal Input */}
           <div className="p-8 bg-zinc-950/80 backdrop-blur-md">
             <div className="max-w-4xl mx-auto">
               <form onSubmit={handleSendMessage} className="relative group">
@@ -389,7 +399,7 @@ const App: React.FC = () => {
                     type="text"
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
-                    placeholder="Ask AIRR Intelligence..."
+                    placeholder={`Ask about current ${sourceType} dataset...`}
                     className="flex-1 bg-transparent border-none px-5 py-4 text-sm text-zinc-100 placeholder:text-zinc-700 focus:outline-none"
                   />
                   <button
