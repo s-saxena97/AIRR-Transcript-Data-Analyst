@@ -82,7 +82,7 @@ export const DataVisualizer: React.FC<Props> = ({ visualization }) => {
     fontWeight: 500
   };
 
-  // Increased margins and specific heights to prevent label clipping
+  // Standard full margin object to satisfy TypeScript and prevent clipping
   const chartMargin = { top: 30, right: 40, left: 30, bottom: 60 };
 
   return (
@@ -164,7 +164,7 @@ export const DataVisualizer: React.FC<Props> = ({ visualization }) => {
                 />
               </LineChart>
             ) : type === ChartType.PIE ? (
-              <PieChart margin={{ bottom: 30, top: 10 }}>
+              <PieChart margin={{ top: 10, right: 30, left: 30, bottom: 30 }}>
                 <Pie
                   data={data}
                   cx="50%"
