@@ -1,0 +1,5 @@
+{
+  "name": "AIRR Transcript Data Analyst",
+  "description": "An AI-powered dashboard for analyzing and visualizing student transcript records processed via AIRR. Upload CSVs or query sample data using natural language to generate charts and insights.",
+  "requestFramePermissions": []
+}
