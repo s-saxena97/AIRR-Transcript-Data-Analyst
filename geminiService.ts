@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { StudentRecord, AnalysisResponse, ChartType } from "./types";
 
@@ -6,8 +5,16 @@ export const analyzeData = async (
   query: string,
   data: StudentRecord[]
 ): Promise<AnalysisResponse> => {
-  // Initialize right before making the request as per guidelines to ensure current environment variables are used
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const apiKey = process.env.API_KEY;
+
+  if (!apiKey) {
+    return {
+      answer: "Error: GEMINI_API_KEY is not configured in Vercel environment variables. Please add it and re-deploy.",
+    };
+  }
+
+  // Initialize with the verified key
+  const ai = new GoogleGenAI({ apiKey });
   
   const systemInstruction = `
     You are a Senior Data Analyst for AIRR (AI Transcript Processing).
@@ -75,7 +82,7 @@ export const analyzeData = async (
   } catch (err) {
     console.error("Gemini Analysis Error:", err);
     return {
-      answer: "I encountered an error during inference. Please verify that your API key is correctly set in the environment variables and try again.",
+      answer: "I encountered an error during inference. This usually happens if the API key is invalid or the request was blocked. Please check your Vercel logs.",
     };
   }
 };
