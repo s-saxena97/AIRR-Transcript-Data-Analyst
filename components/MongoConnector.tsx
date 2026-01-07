@@ -32,9 +32,9 @@ export const MongoConnector: React.FC<Props> = ({ isOpen, onClose, onConnect, is
     }
   }, [isOpen, activeConfig]);
 
-  const isCurrentConfigConnected = 
+  const isCurrentConfigConnected: boolean = 
     sourceType === 'mongo' && 
-    activeConfig && 
+    activeConfig !== null && 
     config.url === activeConfig.url && 
     config.method === activeConfig.method;
 

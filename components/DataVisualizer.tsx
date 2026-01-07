@@ -175,7 +175,7 @@ export const DataVisualizer: React.FC<Props> = ({ visualization }) => {
                   nameKey="label"
                   stroke="#09090b"
                   strokeWidth={3}
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
                 >
                   {data.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
